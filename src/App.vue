@@ -1,62 +1,55 @@
 <template>
-  <div id="app">
-    <div>
-      <div class="squares">
-        <div
-          class="square"
-          @click="clicked(1)"
-          :class="{ lit: isLit[1] }"
-        ></div>
-        <div
-          class="square"
-          @click="clicked(2)"
-          :class="{ lit: isLit[2] }"
-        ></div>
-        <div
-          class="square"
-          @click="clicked(3)"
-          :class="{ lit: isLit[3] }"
-        ></div>
-        <div
-          class="square"
-          @click="clicked(4)"
-          :class="{ lit: isLit[4] }"
-        ></div>
-        <div class="start" @click="startGame">
-          {{ centerButton }}
-          <span v-show="playing">{{ showScore }}</span>
-        </div>
-      </div>
+  <div class="container">
+    <h1>Simon Says</h1>
+    <div class="simon">
+      <ul class="squares">
+        <li class="square" @click="clicked(1)" :class="{ lit: isLit[1] }"></li>
+        <li class="square" @click="clicked(2)" :class="{ lit: isLit[2] }"></li>
+        <li class="square" @click="clicked(3)" :class="{ lit: isLit[3] }"></li>
+        <li class="square" @click="clicked(4)" :class="{ lit: isLit[4] }"></li>
+      </ul>
     </div>
-    <div v-show="playing" class="bottom-bar">
-      <p>Mode:</p>
-      <button
-        @click="
+    <div class="game-info">
+      <h2>Round: {{ score }}</h2>
+      <button @click="startGame">Start</button>
+      <p>{{ messageToUser }}</p>
+    </div>
+    <div class="game-options">
+      <h2>Game Options:</h2>
+      <input
+        type="radio"
+        name="mode"
+        checked
+        @change="
           easy = true;
           medium = false;
           hard = false;
         "
-      >
-        Easy
-      </button>
-      <button
-        @click="
-          hard = false;
+      />
+      Easy
+      <br />
+      <input
+        type="radio"
+        name="mode"
+        @change="
+          easy = false;
           medium = true;
-          easy = false;
+          hard = false;
         "
-      >
-        Medium
-      </button>
-      <button
-        @click="
-          hard = true;
+      />
+      Medium
+      <br />
+      <input
+        type="radio"
+        name="mode"
+        @change="
+          easy = false;
           medium = false;
-          easy = false;
+          hard = true;
         "
-      >
-        Hard
-      </button>
+      />
+      Hard
+      <br />
     </div>
   </div>
 </template>
@@ -68,7 +61,7 @@ export default {
   name: "App",
   data: function () {
     return {
-      centerButton: "START",
+      messageToUser: "",
       easy: true,
       hard: false,
       medium: false,
@@ -76,7 +69,6 @@ export default {
       isClickable: false,
       isWon: false,
       isWrong: false,
-      strict: false,
       score: 0,
       sequence: [],
       sequenceInterval: null,
@@ -112,7 +104,6 @@ export default {
     },
   },
   watch: {
-    // if strict changes in middle of game, reset it
     easy() {
       this.startGame();
     },
@@ -128,7 +119,7 @@ export default {
       this.playing = true;
       this.sequence = [];
       this.playerSequence = [];
-      this.centerButton = "RESET";
+      this.messageToUser = "";
       this.isWon = false;
       this.isWrong = false;
       this.score = 0;
@@ -144,35 +135,31 @@ export default {
       }
     },
     checkWinLose() {
-      // check for incorrect
       for (let i = 0; i < this.playerSequence.length; i++) {
         if (this.playerSequence[i] !== this.sequence[i]) {
-          this.centerButton = "Wrong!";
+          this.messageToUser = `Sorry, you lost after ${this.score} rounds`;
           this.isWrong = true;
           this.isClickable = false;
+          this.playerSequence = [];
+          this.showSequence(true);
 
           setTimeout(() => {
             this.startGame();
-          }, 1000);
-
-          this.playerSequence = [];
-          this.centerButton = "Wrong!";
+          }, 2000);
 
           setTimeout(() => {
-            this.centerButton = "RESET";
+            this.messageToUser = "";
             this.isWrong = false;
           }, 1000);
-
-          this.showSequence(true);
         }
       }
-      // if all correct and same length , continue
+
       if (this.playerSequence.length === this.sequence.length) {
         this.playerSequence = [];
         this.score++;
-        // if win condition, show win, dont continue.
+
         if (this.score === 20) {
-          this.centerButton = "Winner!";
+          this.messageToUser = "Winner!";
           this.isClickable = false;
           this.isWon = true;
         } else {
@@ -203,7 +190,6 @@ export default {
 
       this.isClickable = false;
       if (!redo) {
-        // dont add number on incorrect answers
         this.sequence.push(Math.floor(Math.random() * 4 + 1));
       }
       this.sequenceInterval = setInterval(() => {
@@ -222,100 +208,113 @@ export default {
 
 <style lang="scss">
 $bg-color: #343434;
-$red: #aa2525;
+$red: #ff5643;
 $white: #fff;
-$yellow: #aaaa25;
-$green: #45aa25;
-$blue: #2525aa;
+$yellow: #feef33;
+$green: #bede15;
+$blue: dodgerblue;
 
-#app {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+@mixin square {
+  height: 290px;
+  -webkit-border-radius: 150px 150px 150px 150px;
+  border-radius: 150px 150px 150px 150px;
+  position: absolute;
+  text-indent: 10000px;
+  opacity: 0.6;
+}
 
-  div {
+body {
+  h1 {
+    margin: 1em 0 2em;
+    text-align: center;
+  }
+
+  input {
+    cursor: pointer;
+  }
+
+  .container {
+    width: 540px;
     margin: 0 auto;
-  }
 
-  .squares {
-    display: flex;
-    flex-wrap: wrap;
-    width: 200px;
+    .simon {
+      background: #fff;
+      position: relative;
+      float: left;
+      margin-right: 3em;
+      width: 302px;
+      height: 295px;
+      -webkit-border-radius: 150px 150px 150px 150px;
+      border-radius: 150px 150px 150px 150px;
+      -moz-box-shadow: 2px 1px 12px #aaa;
+      -webkit-box-shadow: 2px 1px 12px #aaa;
+      -o-box-shadow: 2px 1px 12px #aaa;
+      box-shadow: 2px 1px 12px #aaa;
 
-    .square {
-      cursor: pointer;
-      height: 100px;
-      width: 100px;
+      .squares {
+        margin: 0;
+        padding: 0;
+        list-style: none;
 
-      &:hover {
-      }
+        .square {
+          cursor: pointer;
+          @include square;
 
-      &:nth-of-type(1) {
-        background: $green;
-        clip-path: circle(99.8% at 100% 100%);
+          &:hover {
+            border: 2px solid black;
+          }
 
-        &.lit {
-          background: lighten($green, 25%);
-        }
-      }
-      &:nth-of-type(2) {
-        background: $red;
-        clip-path: circle(99.8% at 0 100%);
+          &.lit {
+            opacity: 1;
+          }
 
-        &.lit {
-          background: lighten($red, 25%);
-        }
-      }
-      &:nth-of-type(3) {
-        background: $yellow;
-        clip-path: circle(99.8% at 100% 0);
-
-        &.lit {
-          background: lighten($yellow, 25%);
-        }
-      }
-      &:nth-of-type(4) {
-        background: $blue;
-        clip-path: circle(99.8% at 0 0);
-
-        &.lit {
-          background: lighten($blue, 25%);
+          &:nth-of-type(1) {
+            background: $blue;
+            clip: rect(0px, 150px, 150px, 0px);
+            width: 300px;
+          }
+          &:nth-of-type(2) {
+            background: $red;
+            clip: rect(0px, 300px, 150px, 150px);
+            width: 296px;
+          }
+          &:nth-of-type(3) {
+            background: $yellow;
+            clip: rect(150px, 150px, 300px, 0px);
+            width: 300px;
+          }
+          &:nth-of-type(4) {
+            background: $green;
+            clip: rect(150px, 300px, 300px, 150px);
+            width: 296px;
+          }
         }
       }
     }
-  }
 
-  .start {
-    margin-top: 30px;
-    padding: 10px;
-    border: black 1px solid;
-    width: 100px;
-    cursor: pointer;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
+    .game-info {
+      margin-top: 90px;
 
-    &:hover {
-      color: orange;
-    }
+      button {
+        width: 5em;
+        box-sizing: border-box;
+        cursor: pointer;
+        outline: none;
+        font-size: 1.4em;
+        -webkit-border-radius: 10px 10px 10px 10px;
+        border-radius: 10px 10px 10px 10px;
+        background: #6dabe8;
+        border: none;
+        padding: 0.3em 0.6em;
+      }
 
-    span {
-      font-size: 10px;
-      color: orange;
-    }
-  }
-
-  button {
-    padding: 10px;
-    border: black 1px solid;
-    background: none;
-    outline: none;
-    width: 100px;
-    cursor: pointer;
-    text-align: center;
-
-    &:hover {
-      color: orange;
+      button:active {
+        background: #e5e5e5;
+        -webkit-box-shadow: inset 0px 0px 5px #c1c1c1;
+        -moz-box-shadow: inset 0px 0px 5px #c1c1c1;
+        box-shadow: inset 0px 0px 5px #c1c1c1;
+        outline: none;
+      }
     }
   }
 }
